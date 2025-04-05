@@ -2,10 +2,10 @@ name: iOS Build
 
 on:
   push:
-    branches: [ main ]  # Remplacez par votre branche principale si différente
+    branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # Permet de lancer manuellement le workflow
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
       
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
@@ -24,13 +24,11 @@ jobs:
     - name: Install Cocoapods
       run: |
         gem install cocoapods
-        pod install  # Supprimez cette ligne si vous n'utilisez pas CocoaPods
+        pod install
       
     - name: Build iOS App
       run: |
         xcodebuild -workspace YourApp.xcworkspace -scheme YourScheme -configuration Release -archivePath $RUNNER_TEMP/YourApp.xcarchive archive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-      # Si vous n'utilisez pas de workspace, remplacez par:
-      # xcodebuild -project YourApp.xcodeproj -scheme YourScheme -configuration Release -archivePath $RUNNER_TEMP/YourApp.xcarchive archive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
       
     - name: Create IPA
       run: |
@@ -39,7 +37,7 @@ jobs:
         zip -r YourApp.ipa Payload
         
     - name: Upload IPA
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: app-ipa
         path: YourApp.ipa
