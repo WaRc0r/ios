@@ -1,42 +1,45 @@
-name: SG
+name: iOS Build
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]  # Remplacez par votre branche principale si différente
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Permet de lancer manuellement le workflow
 
 jobs:
-  build-ios:
-    name: 🎉 SG
+  build:
+    name: Build iOS App
     runs-on: macos-latest
+    
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          architecture: x64
-      - run: flutter pub get
+    - name: Checkout code
+      uses: actions/checkout@v3
       
-
-      - run: pod repo update
-        working-directory: ios
-
-      - run: flutter build ios --release --no-codesign
-
-      - run: mkdir Payload
-        working-directory: build/ios/iphoneos
-
-      - run: mv Runner.app/ Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Zip output
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/FlutterIpaExport.ipa
-          tag: v1.0
-          overwrite: true
-          body: "This is first release"
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.7'
+        
+    - name: Install Cocoapods
+      run: |
+        gem install cocoapods
+        pod install  # Supprimez cette ligne si vous n'utilisez pas CocoaPods
+      
+    - name: Build iOS App
+      run: |
+        xcodebuild -workspace YourApp.xcworkspace -scheme YourScheme -configuration Release -archivePath $RUNNER_TEMP/YourApp.xcarchive archive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+      # Si vous n'utilisez pas de workspace, remplacez par:
+      # xcodebuild -project YourApp.xcodeproj -scheme YourScheme -configuration Release -archivePath $RUNNER_TEMP/YourApp.xcarchive archive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+      
+    - name: Create IPA
+      run: |
+        mkdir -p Payload
+        cp -r $RUNNER_TEMP/YourApp.xcarchive/Products/Applications/YourApp.app Payload/
+        zip -r YourApp.ipa Payload
+        
+    - name: Upload IPA
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-ipa
+        path: YourApp.ipa
